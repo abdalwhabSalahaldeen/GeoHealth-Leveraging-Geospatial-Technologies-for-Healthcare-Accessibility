@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hospital webgis</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.2/dist/leaflet.css"
+    integrity="sha256-sA+zWATbFveLLNqWO2gtiw3HL/lh1giY/Inf1BJ0z14=" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+
+  <style>
+    #map {
+
+
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+    }
+  </style>
+
+
+</head>
+<body>
+
+    <div id="map"></div>
+
+
+  <script src="https://unpkg.com/leaflet@1.9.2/dist/leaflet.js"
+    integrity="sha256-o9N1jGDZrf5tS+Ft4gbIK7mYMipq9lqpVJ91xHSyKhg=" crossorigin=""></script>
+  <script src="https://code.jquery.com/jquery-3.6.1.min.js"
+    integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+
+  <script>
+
+var map = L.map('map').setView([15.5007, 32.5599], 13);
+
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  minZoom: 7,
+  attribution: '&copy;hospital webgis Map'
+}).addTo(map);
+
+
+var greenIcon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
+navigator.geolocation.getCurrentPosition((position) => {
+
+
+    const p = position.coords;
+    var decimalsx = p.longitude - Math.floor(p.longitude);
+    var decimalsy = p.latitude - Math.floor(p.latitude);
+    decimalsx = decimalsx*100000000000;
+    decimalsy = decimalsy*100000000000;
+      // console.log(p.latitude,p.longitude);
+
+   
+      var url = 
+      "http://127.0.0.1:8080/geoserver/karary/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=karary%3Anew_viewer&maxFeatures=50&outputFormat=application%2Fjson&viewparams=x:"+Math.trunc(p.longitude)+";x2:"+decimalsx+";y:"+Math.trunc(p.latitude)+";y2:"+decimalsy+";";
+	
+    
+    
+    
+    $.ajax({
+		url: url,
+        async: false,
+      
+		success: function(data) {
+            L.marker([p.latitude, p.longitude], { icon: greenIcon }).addTo(map);
+      map.setView([p.latitude, p.longitude], 13);
+      console.log(data);
+
+      L.geoJSON(data).addTo(map);
+      L.Routing.control({
+        createMarker: function () { return null; },
+        waypoints: [
+          L.latLng(p.latitude, p.longitude),
+          L.latLng(data.features[0].geometry.coordinates[1], data.features[0].geometry.coordinates[0])
+        ]
+      }).addTo(map);
+
+          
+			
+		}
+	});
+
+
+   
+});
+
+    </script>
+</body>
+</html>
